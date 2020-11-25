@@ -22,10 +22,10 @@ sc
 ```
 ##### 从集合中获取RDD
 ```shell
-val data = Array(1, 2, 3, 4, 5)
-# data: Array[Int] = Array(1, 2, 3, 4, 5)
-val distData = sc.parallelize(data)
+val distData = sc.parallelize(Array(1, 2, 3, 4, 5))
 # distData: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[0] at parallelize at <console>:26
+
+val partitionsDistData = sc.parallelize(Array(1, 2, 3, 4, 5), 4)
 ```
 ##### 从外部文件中获取RDD
 ```shell
@@ -75,20 +75,28 @@ flatMapDistData.collect()
 
 #### ``mapPartitions(func)``
 - 含义: 与map相似但是会接受一个分区中的所有数据，而map只会接收单个元素
-- 示例:
+- 示例: 将分区中的所有元素乘以2, 因为mapPartitions会接受一个分区中的所有数据所有参数类型为数组，需要使用map再次遍历
 ```shell
+distData.collect()
+# Array[Int] = Array(1, 2, 3, 4, 5)
 
+val mapPartitionsDistData = distData.mapPartitions(v => v.map(_ * 2))
+mapPartitionsDistData.collect()
+# Array[Int] = Array(2, 4, 6, 8, 10)
 ```
 
 #### ``mapPartitionsWithIndex(func)``
 - 含义: 与mapPartitions类似而且可以获取分区索引的整数值
 - 示例:
 ```shell
-
+val partitionsDistData = sc.parallelize(Array(1, 2, 3, 4, 5), 4)
+val mapPartitionsWithIndexDistData = partitionsDistData.mapPartitionsWithIndex((index, items) => items.map((index, _)))
+mapPartitionsWithIndexDistData.collect()
+# Array[(Int, Int)] = Array((0,1), (1,2), (2,3), (3,4), (3,5))
 ```
 
 #### ``sample(withReplacement, fraction, seed)``
-- 含义: 
+- 含义: 以指定的随机种子随机抽样出数量为fraction的数据，withReplacement表示是抽出的数据是否放回，true为有放回的抽样，false为无放回的抽样，seed用于指定随机数生 成器种子
 - 示例:
 ```shell
 
@@ -98,14 +106,24 @@ flatMapDistData.collect()
 - 含义: 返回一个新的RDD其中包含源RDD去重后的结果
 - 示例:
 ```shell
-
+val notDistinctDistData = sc.parallelize(Array(1, 1, 2, 3, 4, 5, 5, 6))
+val distinctDistData = notDistinctDistData.distinct()
+distinctDistData.collect()
+# Array[Int] = Array(4, 1, 6, 3, 5, 2)
 ```
 
 #### ``sortBy(func,[ascending], [numTasks])``
 - 含义: 使用func先对数据进行处理，按照处理后的数据比较结果排序默认为正序
 - 示例:
 ```shell
+distData.collect()
+# Array[Int] = Array(1, 2, 3, 4, 5)
 
+distData.sample(true, 0.6, 1).collect()
+# Array[Int] = Array(1, 3, 4, 5, 5)
+
+distData.sample(false, 0.6, 1).collect()
+# Array[Int] = Array(1, 3, 5)
 ```
 
 #### ``pipe(command, [envVars])``
@@ -119,52 +137,72 @@ flatMapDistData.collect()
 - 含义: 缩减分区数
 - 示例:
 ```shell
+val partitionsDistData = sc.parallelize(Array(1, 2, 3, 4, 5), 4)
+partitionsDistData.partitions.size
+# Int = 4
 
+val coalesceDistData = partitionsDistData.coalesce(2)
+coalesceDistData.partitions.size
+# Int = 2
 ```
 
 #### ``repartition(numPartitions)``
 - 含义: 根据分区数重新通过网络随机洗牌所有数据
 - 示例:
 ```shell
-
+val repartitionDistData = partitionsDistData.repartition(2)
+repartitionDistData.partitions.size
+# Int = 2
 ```
 
 ---
 
 #### Dubbo Value类型
 #### ``union(otherDataset)``
-- 含义: 返回一个新的RDD，其中包含源RDD和输入RDD两者元素的并集
+- 含义: 返回一个新的RDD，其中包含源RDD和输入RDD两者元素的并集, 并且不会对元素进行去重
 - 示例:
 ```shell
-
+val distData1 = sc.parallelize(Array(1, 2, 3, 4))
+val distData2 = sc.parallelize(Array(3, 4, 5, 6))
+val unionDistData = distData1.union(distData2)
+unionDistData.collect()
+# Array[Int] = Array(1, 2, 3, 4, 3, 4, 5, 6)
 ```
 
 #### ``intersection(otherDataset)``
 - 含义: 返回一个新的RDD，其中包含源RDD和输入RDD两者元素的交集
 - 示例:
 ```shell
-
+val intersectionDistData = distData1.intersection(distData2)
+intersectionDistData.collect()
+# Array[Int] = Array(4, 3)
 ```
 
-#### ``subtract (otherDataset)``
+#### ``subtract(otherDataset)``
 - 含义: 返回一个新的RDD，其中包含源RDD和输入RDD两者元素的差集
 - 示例:
 ```shell
-
+val subtractDistData = distData1.subtract(distData2)
+subtractDistData.collect()
+# Array[Int] = Array(1, 2)
 ```
 
 #### ``cartesian(otherDataset)``
 - 含义: 笛卡尔积
 - 示例:
 ```shell
-
+val cartesianDistData = distData1.cartesian(distData2)
+cartesianDistData.collect()
+# Array[(Int, Int)] = Array((1,3), (1,4), (1,5), (1,6), (2,3), (2,4), (2,5), (2,6), (3,3), (3,4), (3,5), (3,6), (4,3), (4,4), (4,5), (4,6))
 ```
 
 #### ``zip(otherDataset)``
 - 含义: 将两个RDD组合成(K,V)形式的RDD,两者元素个数必须相等否则会抛出异常
 - 示例:
 ```shell
-
+val zipDistData = distData1.zip(distData2)
+zipDistData.collect()
+# Array[(Int, Int)] = Array((1,3), (2,4), (3,5), (4,6))
 ```
 
 ---
@@ -249,5 +287,3 @@ flatMapDistData.collect()
 ```
 
 #### 行动算子
-
-#### RDD分区
