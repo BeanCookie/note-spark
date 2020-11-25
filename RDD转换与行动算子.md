@@ -123,14 +123,6 @@ distinctDistData.collect()
 - 含义: 使用func先对数据进行处理，按照处理后的数据比较结果排序默认为正序
 - 示例:
 ```shell
-distData.collect()
-# Array[Int] = Array(1, 2, 3, 4, 5)
-
-distData.sample(true, 0.6, 1).collect()
-# Array[Int] = Array(1, 3, 4, 5, 5)
-
-distData.sample(false, 0.6, 1).collect()
-# Array[Int] = Array(1, 3, 5)
 ```
 
 #### ``pipe(command, [envVars])``
