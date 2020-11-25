@@ -99,7 +99,14 @@ mapPartitionsWithIndexDistData.collect()
 - 含义: 以指定的随机种子随机抽样出数量为fraction的数据，withReplacement表示是抽出的数据是否放回，true为有放回的抽样，false为无放回的抽样，seed用于指定随机数生 成器种子
 - 示例:
 ```shell
+distData.collect()
+# Array[Int] = Array(1, 2, 3, 4, 5)
 
+distData.sample(true, 0.6, 1).collect()
+# Array[Int] = Array(1, 3, 4, 5, 5)
+
+distData.sample(false, 0.6, 1).collect()
+# Array[Int] = Array(1, 3, 5)
 ```
 
 #### ``distinct([numPartitions]))``
