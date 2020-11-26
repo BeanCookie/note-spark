@@ -209,20 +209,39 @@ zipDistData.collect()
 #### KV类型
 
 #### ``sortByKey([ascending], [numPartitions])``
-- 含义: 
+- 含义: 对(K, V)形式的RDD按K进行排序, K必须实现Ordered接口,其中ascending为ture表示升序,false表示降序
 - 示例:
 ```shell
-
+val kvDistData = sc.parallelize(Array((2, "b"), (1, "a"), (4, "d"), (3, "c"), (5, "e")))
+kvDistData.collect()
+# Array[(Int, String)] = Array((2,b), (1,a), (4,d), (3,c), (5,e)
+kvDistData.sortByKey(true).collect()
+# Array[(Int, String)] = Array((1,a), (2,b), (3,c), (4,d), (5,e))
+kvDistData.sortByKey(false).collect()
+# Array[(Int, String)] = Array((5,e), (4,d), (3,c), (2,b), (1,a))
 ```
 
 #### ``groupByKey([numPartitions])``
-- 含义: 
+- 含义: 将(K, V)形式的RDD相同K的V聚集到数组中, 最终形成(K, (V1, V2))形式的RDD
 - 示例:
 ```shell
-
+val kvDistData = sc.parallelize(Array((2, "b"), (1, "a"), (4, "d"), (3, "c"), (5, "e"), (1, "aa"), (3, "cc"), (4, "dd")))
+val groupByKeyDistData = kvDistData.groupByKey()
+groupByKeyDistData.collect()
+# Array[(Int, Iterable[String])] = Array((4,CompactBuffer(d, dd)), (1,CompactBuffer(a, aa)), (3,CompactBuffer(c, cc)), (5,CompactBuffer(e)), (2,CompactBuffer(b)))
 ```
 
 #### ``reduceByKey(func, [numPartitions])``
+- 含义: 在(K, V)行的RDD上调用时，返回(K, V)形式的RDD，其中每个相同K对应的所有V使用给定的reduce函数func进行汇总，reduce函数必须为(V, V) => V, reduce任务的数量可以通过可选的第二个参数numPartitions配置。
+- 示例:
+```shell
+val kvDistData = sc.parallelize(Array(("b", 2), ("a", 1), ("d", 4), ("c", 3), ("e", 5), ("a", 11), ("c", 33), ("d", 44)))
+val reduceByKeyDistData = kvDistData.reduceByKey((a, b) => a + b)
+reduceByKeyDistData.collect()
+# Array[(String, Int)] = Array((d,48), (e,5), (a,12), (b,2), (c,36))
+```
+
+#### ``join(otherDataset, [numPartitions])``
 - 含义: 
 - 示例:
 ```shell
@@ -258,21 +277,19 @@ zipDistData.collect()
 ```
 
 #### ``partitionBy``
-- 含义: 
+- 含义: 对(K, V)形式的RDD进行分区
 - 示例:
 ```shell
-
+val kvDistData = sc.parallelize(Array((2, "b"), (1, "a"), (4, "d"), (3, "c"), (5, "e"), (1, "aa"), (3, "cc"), (4, "dd")))
+kvDistData.partitions.size
+# Int = 1
+val partitionByDistData = kvDistData.partitionBy(new org.apache.spark.HashPartitioner(2))
+partitionByDistData.partitions.size
+# Int = 2
 ```
 
 #### ``repartitionAndSortWithinPartitions(partitioner)``
 - 含义: 根据给定的分区程序对RDD进行重新分区，并在每个结果分区中，按其键对记录进行排序。这比repartition在每个分区内调用然后排序更为有效，因为它可以将排序推入洗牌机制
-- 示例:
-```shell
-
-```
-
-#### ``join(otherDataset, [numPartitions])``
-- 含义: 
 - 示例:
 ```shell
 
