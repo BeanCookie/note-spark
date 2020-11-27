@@ -120,9 +120,15 @@ distinctDistData.collect()
 ```
 
 #### ``sortBy(func,[ascending], [numTasks])``
-- 含义: 使用func先对数据进行处理，按照处理后的数据比较结果排序默认为正序
+- 含义: 使用func先对数据进行处理，按照处理后的数据比较结果排序,ascending为true是表示升序,false表示降序,默认为升序
 - 示例:
 ```shell
+val distData = sc.parallelize(Array(2, 1, 4, 3, 5, 2, 5))
+
+distData.sortBy(v => v).collect()
+# Array[Int] = Array(1, 2, 2, 3, 4, 5, 5)
+distData.sortBy(v => v, false).collect()
+# Array[Int] = Array(5, 5, 4, 3, 2, 2, 1)
 ```
 
 #### ``pipe(command, [envVars])``
@@ -242,38 +248,25 @@ reduceByKeyDistData.collect()
 ```
 
 #### ``join(otherDataset, [numPartitions])``
-- 含义: 
+- 含义: 在类型为(K,V)和(K,W)的RDD上调用，返回一个相同K对应的所有元素对在一起的(K,(V,W))形式的RDD
 - 示例:
 ```shell
-
-```
-
-#### ``foldByKey``
-- 含义: 
-- 示例:
-```shell
-
-```
-
-#### ``combineByKey``
-- 含义: 
-- 示例:
-```shell
-
+val distDataA = sc.parallelize(Array((2, 3), (1, 2), (4, 5), (3, 4), (5, 6)))
+val distDataB = sc.parallelize(Array((2, "b"), (1, "a"), (4, "d"), (3, "c"), (5, "e")))
+val joinDistData = distDataA.join(distDataB)
+joinDistData.collect()
+# Array[(Int, (Int, String))] = Array((4,(5,d)), (1,(2,a)), (3,(4,c)), (5,(6,e)), (2,(3,b)))
 ```
 
 #### ``mapValues``
 - 含义: 
 - 示例:
 ```shell
+val distData = sc.parallelize(Array((2, "b"), (1, "a"), (4, "d"), (3, "c"), (5, "e")))
 
-```
-
-#### ``aggregateByKey(zeroValue)(seqOp, combOp, [numPartitions])``
-- 含义: 
-- 示例:
-```shell
-
+val mapValuesdistData = distData.mapValues(v => '|' + v + '|')
+mapValuesdistData.collect()
+# Array[(Int, String)] = Array((2,|b|), (1,|a|), (4,|d|), (3,|c|), (5,|e|))
 ```
 
 #### ``partitionBy``
@@ -292,11 +285,39 @@ partitionByDistData.partitions.size
 - 含义: 根据给定的分区程序对RDD进行重新分区，并在每个结果分区中，按其键对记录进行排序。这比repartition在每个分区内调用然后排序更为有效，因为它可以将排序推入洗牌机制
 - 示例:
 ```shell
-
+val kvDistData = sc.parallelize(Array((2, "b"), (1, "a"), (4, "d"), (3, "c"), (5, "e"), (1, "aa"), (3, "cc"), (4, "dd")))
+val partitionByDistData = kvDistData.repartitionAndSortWithinPartitions(new org.apache.spark.HashPartitioner(2))
+partitionByDistData.collect()
+# Array[(Int, String)] = Array((2,b), (4,d), (4,dd), (1,a), (1,aa), (3,c), (3,cc), (5,e))
 ```
 
 #### ``cogroup(otherDataset, [numPartitions])``
-- 含义: 在类型为(K,V)和(K,W)的 RDD 上调用，返回一个(K,(Iterable<V>,Iterable<W>))类 型的 RDD
+- 含义: 在类型为(K,V)和(K,W)的 RDD 上调用，返回一个(K,(Iterable<V>,Iterable<W>))类型的RDD
+- 示例:
+```shell
+val distDataA = sc.parallelize(Array((2, 3), (1, 2), (4, 5), (3, 4), (5, 6), (2, 4), (1, 3)))
+val distDataB = sc.parallelize(Array((2, "b"), (1, "a"), (4, "d"), (3, "c"), (5, "e"), (2, "bb"), (1, "aa")))
+val cogroupDistData = distDataA.cogroup(distDataB)
+cogroupDistData.collect()
+# Array[(Int, (Iterable[Int], Iterable[String]))] = Array((4,(CompactBuffer(5),CompactBuffer(d))), (1,(CompactBuffer(2, 3),CompactBuffer(a, aa))), (3,(CompactBuffer(4),CompactBuffer(c))), (5,(CompactBuffer(6),CompactBuffer(e))), (2,(CompactBuffer(3, 4),CompactBuffer(b, bb))))
+```
+
+#### ``aggregateByKey(zeroValue)(seqOp, combOp, [numPartitions])``
+- 含义: 
+- 示例:
+```shell
+
+```
+
+#### ``foldByKey``
+- 含义: 
+- 示例:
+```shell
+
+```
+
+#### ``combineByKey``
+- 含义: 
 - 示例:
 ```shell
 
