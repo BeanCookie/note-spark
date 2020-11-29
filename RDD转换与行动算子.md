@@ -332,11 +332,11 @@ JavaPairRDD<String, Integer> counts = ones.reduceByKey(Integer::sum);
 - 示例:
 ```java
 ones.foldByKey(0, new Function2<Integer, Integer, Integer>() {
-            @Override
-            public Integer call(Integer a, Integer b) throws Exception {
-                return a + b;
-            }
-        });
+    @Override
+    public Integer call(Integer a, Integer b) throws Exception {
+        return a + b;
+    }
+});
 ```
 
 #### ``combineByKey``
