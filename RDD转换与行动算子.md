@@ -303,23 +303,50 @@ cogroupDistData.collect()
 ```
 
 #### ``aggregateByKey(zeroValue)(seqOp, combOp, [numPartitions])``
-- 含义: 
+- 含义: 在KV形式的RDD中, 按K将V进行分组合并，合并时将每个V 和初始值作为seq函数的参数进行计算，返回的结果作为一个新的KV对，然后再将结果按照V进行合并，最后将每个分组的V传递给 combine函数进行计算(先将前两个V进行计算，将返回结果和下一个 vV传给combine函数，以此类推)，将V与计算结果作为一个新的KV对输出。
+- 参数描述: 
+  - zeroValue: 给每一个分区中的每一个V一个初始值
+  - seqOp: 函数用于在每一个分区中用初始值逐步迭代V
+  - combOp: 函数用于合并每个分区中的结果
 - 示例:
-```shell
-
+```java
+JavaRDD<String> lines = sparkContext.textFile(args[0], 1).toJavaRDD();
+JavaRDD<String> words = lines.flatMap(line -> Arrays.asList(SPACE.split(line)).iterator());
+JavaPairRDD<String, Integer> ones = words.mapToPair(word -> new Tuple2<>(word, 1));
+ones.aggregateByKey(0, new Function2<Integer, Integer, Integer>() {
+    @Override
+    public Integer call(Integer seqA, Integer seqB) throws Exception {
+        return seqA + seqB;
+    }
+}, new Function2<Integer, Integer, Integer>() {
+    @Override
+    public Integer call(Integer combA, Integer combB) throws Exception {
+        return combA + combB;
+    }
+});
+JavaPairRDD<String, Integer> counts = ones.reduceByKey(Integer::sum);
 ```
 
 #### ``foldByKey``
-- 含义: 
+- 含义: aggregateByKey的简化操作，seqPp和combOp相同
 - 示例:
-```shell
-
+```java
+ones.foldByKey(0, new Function2<Integer, Integer, Integer>() {
+            @Override
+            public Integer call(Integer a, Integer b) throws Exception {
+                return a + b;
+            }
+        });
 ```
 
 #### ``combineByKey``
-- 含义: 
+- 含义: 针对相同K，将V合并成一个集合
 - 示例:
-```shell
+- 参数描述: 
+  - createCombiner: combineByKey()会遍历分区中的所有元素，因此每个元素的键要么还没有遇到过, 要么就和之前的某个元素的键相同。如果这是一个新的元素, combineByKey()会使用一个叫作createCombiner()的函数来创建那个键对应的累加器的初始值
+  - mergeValue: 如果这是一个在处理当前分区之前已经遇到的键，它会使用mergeValue()方法将该键的累加器对应的当前值与这个新的值进行合并
+  - combOp: mergeCombiners: 由于每个分区都是独立处理的, 因此对于同一个键可以有多个累加器。如果有两个或者更多的分区都有对应同一个键的累加器, 就需要使用用户提供的 mergeCombiners()方法将各个分区的结果进行合并
+```java
 
 ```
 
