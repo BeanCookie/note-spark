@@ -361,6 +361,15 @@ distData.collect()
 # Array[Int] = Array(1, 2, 3, 4, 5)
 ```
 
+#### ``reduce(func)``
+- 含义: 通过func函数聚集RDD中的所有元素，先聚合分区内数据，再聚合分区间数据
+- 示例: 对所有元素求和
+```shell
+val distData = sc.parallelize(Array(1, 2, 3, 4, 5))
+distData.reduce((a, b) => a + b)
+# Int = 15
+```
+
 #### ``count()``
 - 含义: 返回RDD中元素的个数
 - 示例:
