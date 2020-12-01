@@ -96,7 +96,7 @@ mapPartitionsWithIndexDistData.collect()
 ```
 
 #### ``sample(withReplacement, fraction, seed)``
-- 含义: 以指定的随机种子随机抽样出数量为fraction的数据，withReplacement表示是抽出的数据是否放回，true为有放回的抽样，false为无放回的抽样，seed用于指定随机数生 成器种子
+- 含义: 以指定的随机种子随机抽样出百分比为fraction的数据，fraction取值在[0, 1]之间, withReplacement表示是抽出的数据是否放回，true为有放回的抽样，false为无放回的抽样，seed用于指定随机数生 成器种子
 - 示例:
 ```shell
 distData.collect()
@@ -351,3 +351,75 @@ ones.foldByKey(0, new Function2<Integer, Integer, Integer>() {
 ```
 
 #### 行动算子
+
+#### ``collect()``
+- 含义: 以数组的形式返回数据集的所有元素
+- 示例:
+```shell
+val distData = sc.parallelize(Array(1, 2, 3, 4, 5))
+distData.collect()
+# Array[Int] = Array(1, 2, 3, 4, 5)
+```
+
+#### ``count()``
+- 含义: 返回RDD中元素的个数
+- 示例:
+```shell
+val distData = sc.parallelize(Array(1, 2, 3, 4, 5))
+distData.count()
+# Long = 5
+```
+
+#### ``first()``
+- 含义: 返回RDD中的第一个元素
+- 示例:
+```shell
+val distData = sc.parallelize(Array(1, 2, 3, 4, 5))
+distData.first()
+# Int = 1
+```
+
+#### ``take(n)``
+- 含义: 返回一个由RDD的前n个元素组成的数组
+- 示例:
+```shell
+val distData = sc.parallelize(Array(1, 2, 3, 4, 5))
+distData.take(3)
+# Array[Int] = Array(1, 2, 3)
+```
+
+#### ``takeOrdered(n, [ordering])``
+- 含义: 返回该RDD排序后的前n个元素组成的数组, 
+- 示例:
+```shell
+val distData = sc.parallelize(Array(5, 4, 3, 2, 1))
+distData.takeOrdered(3)
+# Array[Int] = Array(1, 2, 3, 4, 5)
+```
+
+#### ``takeSample(withReplacement, num, [seed])``
+- 含义: 以指定的随机种子随机抽样出数量为num的数据，withReplacement表示是抽出的数据是否放回，true为有放回的抽样，false为无放回的抽样，seed用于指定随机数生 成器种子
+- 示例:
+```shell
+val distData = sc.parallelize(Array(1, 2, 3, 4, 5))
+distData.takeSample(false, 3)
+# Array[Int] = Array(2, 5, 3)
+```
+
+#### ``countByKey()``
+- 含义: 针对(K,V)类型的RDD, 返回一个(K,Int)的map，表示每一个K对应的元素个数
+- 示例:
+```shell
+val kvDistData = sc.parallelize(Array((5, "e"), (4, "d"), (3, "c"), (2, "b"), (1, "a"), (5, "ee"), (4, "dd")))
+kvDistData.countByKey()
+# scala.collection.Map[Int,Long] = Map(5 -> 2, 1 -> 1, 2 -> 1, 3 -> 1, 4 -> 2)
+```
+
+#### ``foreach(func)``
+- 含义: 在数据集的每一个元素上，运行函数func进行更新
+- 示例:
+```shell
+val distData = sc.parallelize(Array(1, 2, 3, 4, 5))
+distData.foreach(v => print(v + ","))
+# 5,4,3,2,1,
+```
