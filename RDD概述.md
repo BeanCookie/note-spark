@@ -26,7 +26,7 @@ RDD（Resilient Distributed Dataset）叫做弹性分布式数据集，是Spark�
 RDD创建之后无法直接更改数据，只有通过转换操作生成新的RDD。
 
 - 依赖
-通过转换操作生成的RDD会包含父RDD的依赖信息又称血缘关系，当RDD数据丢失后正是通过依赖信息重新计算数据的。依赖又分为窄依赖和宽依赖，窄依赖就是RDD中的每个分区都是一对一关系，宽依赖则表示子RDD的每个分区数据与父RDD的所有分区都有关系属于多对多关系。
+通过转换操作生成的RDD会包含父RDD的依赖信息又称血缘关系，当RDD数据丢失后正是通过依赖信息重新计算数据的。依赖又分为窄依赖和宽依赖，窄依赖就是每一个父RDD的Partition最多被子RDD的一个 Partition使用，宽依赖则表示多个子RDD的Partition会依赖同一个父RDD的Partition。
 
 #### RDD编程API
 - 转换操作
