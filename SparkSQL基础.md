@@ -27,6 +27,35 @@ Dataset<Row> dataset = sparkSession.read()
                 .csv("/vagrant_data/pokemon0820.csv");
 ```
 
+#### 将RDD转化为DataFrame
+
+##### 使用反射机制推理出Schema
+支持将JavaBean的RDD自动转换为DataFram<T>，当前Spark SQL不支持包含Map字段的JavaBean，不过支持嵌套JavaBean和List或Array字段，可以通过创建一个实现Serializable并具有其所有字段的getter和setter方法的类来创建JavaBean。
+```java
+JavaRDD<Pokemon> pokemonRDD = dataset.javaRDD()
+                .map(row -> {
+                    Pokemon pokemon = new Pokemon();
+                    pokemon.setAbilities(row.getString(0));
+                    ...
+                    return pokemon;
+                });
+sparkSession.createDataFrame(pokemonRDD, Pokemon.class);
+```
+##### 由开发者指定Schema
+当无法提前定义JavaBean类时（例如，记录的结构编码为字符串，或者将解析文本数据集并且为不同的用户设计不同的字段）
+```java
+String schemaString = "abilities,against_bug,against_dark,...";
+List<StructField> fields = new ArrayList<>();
+for (String fieldName : schemaString.split(",")) {
+    StructField field = DataTypes.createStructField(fieldName, DataTypes.StringType, true);
+    fields.add(field);
+}
+StructType schema = DataTypes.createStructType(fields);
+JavaRDD<Row> pokemonRDD = dataset.javaRDD()
+                .map(row -> RowFactory.create(row.getString(0), row.getString(1,...));
+sparkSession.createDataFrame(pokemonRDD, schema);
+```
+
 - func printSchema
 - 输出以树格式输出DataFrame对象的Schema信息
 ```java
@@ -150,6 +179,10 @@ sparkSession.sql("SELECT type1, COUNT(type1) FROM pokemon GROUP BY type1 ORDER B
 +--------+-----+
 ```
 
+##### 窗口函数
+
+##### 用户自定义函数
+
 #### Dataset
 DataFrame本质上正是特殊的Dataset：``DataFrame == Dataset<Row>``
 
@@ -169,9 +202,54 @@ Dataset<Pokemon> pokemonDataset = sparkSession.read().csv("/vagrant_data/pokemon
         pokemonDataset.printSchema();
 ```
 
-#### 将RDD转化为Dataset
-
-##### 使用反射机制推理出Schema
-##### 由开发者指定Schema
+#### SparkSQL
+##### 查询语句
+- SELECT与FROM
+- WHERE
+- GROUP BY
+- HAVING
+- UNION
+- ORDER BY
+- LIMIT
+- JOIN
+##### 内置函数
+- cast(value AS type) → type
+- log(double base, Column a)
+- exp(Column e)
+- factorial(Column e)
+- split(Column str, String pattern)
+- substring(Column str, int pos, int len)
+- concat(Column... exprs)
+- translate(Column src, String matchingString, StringreplaceString)
+- bin(Column e)
+- hex(Column e)
+- base64(Column e)
+- unbase64(Column e)
+- current_date()
+- current_timestamp()
+- date_format(Column dateExpr, String format)
+- regexp_extract(Column e, String exp, int groupIdx)
+- regexp_replace(Column e, String pattern, Stringreplacement)
+- to_json(Column e)
+- from_json(Column e, Column Schema)
+- get_json_object(Column e, String path)
+- parse_url(string urlString, string partToExtract [,stringkeyToExtract])
+- countDistinct(Column expr, Column... exprs)
+- sumDistinct(Column e)
+- approxCountDistinct(String columnName, doublersd)
+- avg(Column e)
+- count(Column e)
+- first(Column e, [Boolean ignoreNulls])
+- last(Column e, [Boolean ignoreNulls])
+- max(Column e)
+- min(Column e)
+- sum(Column e)
+- skewness(Column e)
+- stddev_samp(Column e)
+- stddev(Column e)
+- stddev_pop(Column e)
+- var_samp(Column e)
+- variance(Column e)
+- var_pop(Column e)
+##### 窗口函数
 ##### 自定义函数
-
