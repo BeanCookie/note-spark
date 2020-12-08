@@ -120,6 +120,21 @@ public class CatalogConstants {
             "      \"col\": \"against_dark\",\n" +
             "      \"type\": \"string\"\n" +
             "    },\n" +
+            "    \"type1\": {\n" +
+            "      \"cf\": \"cf36\",\n" +
+            "      \"col\": \"type1\",\n" +
+            "      \"type\": \"string\"\n" +
+            "    },\n" +
+            "    \"type2\": {\n" +
+            "      \"cf\": \"cf37\",\n" +
+            "      \"col\": \"type2\",\n" +
+            "      \"type\": \"string\"\n" +
+            "    },\n" +
+            "    \"weight_kg\": {\n" +
+            "      \"cf\": \"cf38\",\n" +
+            "      \"col\": \"weight_kg\",\n" +
+            "      \"type\": \"string\"\n" +
+            "    }\n" +
             "  }\n" +
             "}\n" +
             "\n";
