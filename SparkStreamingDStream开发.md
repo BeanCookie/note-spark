@@ -21,7 +21,7 @@ jssc.awaitTermination();
 
 使用nc命令向localhost:1999输入单词
 ```shell
-nc -lk 9999
+nc -lk 1999
 > a
 > b
 > c
@@ -88,14 +88,17 @@ public DStream<T> union(DStream<T> that)
 public <U> DStream<U> transform(Function1<RDD<T>, RDD<U>> transformFunc)
 ```
 
-- 含义: transform算子是DStream所独有的，它用transformFunc函数从输入的RDD得到一个新的RDD，在transformFunc这个函数中，还可以使用RDD的算子、Spark SQL等操作，该算子在应对一些复杂操作时比较有用
-```shell
-distData.collect()
-# Array[Int] = Array(1, 2, 3, 4, 5)
+- 含义: transform算子是DStream所独有的，它用transformFunc函数从输入的RDD得到一个新的RDD，在transformFunc这个函数中还可以使用RDD的Join、Spark SQL等操作，该算子在应对一些复杂操作时比较有用
+- 示例：有一些特殊单词需要在统计时被忽略
+```java
+JavaPairRDD<String, Boolean> ignoreRdd = jssc.sparkContext().parallelize(Arrays.asList(",", ";")).mapToPair(s -> new Tuple2<>(s, true));
 
-val mapDistData = distData.map(v => v * v)
-mapDistData.collect()
-# Array[Int] = Array(1, 4, 9, 16, 25)
+pairs.transform(new Function<JavaPairRDD<String, Integer>, JavaRDD<Tuple2<String, Integer>>>() {
+    @Override
+    public JavaRDD<Tuple2<String, Integer>> call(JavaPairRDD<String, Integer> rdd) throws Exception {
+        return rdd.join(ignoreRdd).filter(x -> !x._2._2).map(x -> new Tuple2<>(x._1, x._2._1));
+    }
+});
 ```
 
 #### ``transformWith``
@@ -104,39 +107,7 @@ mapDistData.collect()
 public <U,V> DStream<V> transformWith(DStream<U> other, Function2<RDD<T>, RDD<U>, RDD<V>> transformFunc)
 ```
 
-- 含义: transformWith还可以完成与其他数据集进行join
-```shell
-distData.collect()
-# Array[Int] = Array(1, 2, 3, 4, 5)
-
-val mapDistData = distData.map(v => v * v)
-mapDistData.collect()
-# Array[Int] = Array(1, 4, 9, 16, 25)
-```
-#### 有状态转化操作
-
-UpdateStateByKey用于保存历史记录，有时我们需要在DStream中跨批次维护状态。针对这种情况updateStateByKey()为我们提供了对一个状态变量的访问。用于键值对形式的DStream，给定一个由(键，事件)对构成的DStream，并传递一个指定如何根据新的事件更新每个键对应状态的函数，它可以构建出一个新的DStream其内部数据为(键，状态)对。
-#### ``mapWithState``
-
-```java
-public <StateType, MappedType> MapWithStateDStream<K, V, StateType,MappedType> mapWithState(StateSpec<K, V, StateType, MappedType> spec)
-```
-
-- 含义: 
-```shell
-
-```
-
-#### ``updateStateByKey``
-
-```java
-public <S> DStream<Tuple2<K,S>> updateStateByKey(Function4<Time, K, Seq<V>, Option<S>, scala.Option<S>> updateFunc, Partitioner partitioner, boolean rememberPartitioner, Option<RDD<Tuple2<K,S>>> initialRDD)
-```
-
-- 含义: 
-```shell
-
-```
+- 含义: 与transform算子类似不同的是可以用来处理两个RDD以生成一个RDD
 #### 窗口操作
 ![spark002](http://git.nuozhilin.site/luzhong/images/raw/branch/master/spark002.png)
 
@@ -164,7 +135,7 @@ public DStream<T> window(Duration windowDuration, Duration slideDuration)
 public DStream<T> reduceByWindow(Function2<T, T, T> reduceFunc, Function2<T, T, T> invReduceFunc, Duration windowDuration, Duration slideDuration)
 ```
 
-- 含义: 
+- 含义: 基于数据流在一个滑动窗口内的元素，用func做聚合，返回一个单元素数据流。func必须满足结合律，以便支持并行计算
 
 #### ``countByWindow``
 
@@ -172,7 +143,7 @@ public DStream<T> reduceByWindow(Function2<T, T, T> reduceFunc, Function2<T, T, 
 public DStream<Object> countByWindow(Duration windowDuration, Duration slideDuration)
 ```
 
-- 含义: 
+- 含义: 返回数据流在一个滑动窗口内的元素个数
 
 #### ``countByValueAndWindow``
 
@@ -180,4 +151,38 @@ public DStream<Object> countByWindow(Duration windowDuration, Duration slideDura
 public DStream<scala.Tuple2<T,Object>> countByValueAndWindow(Duration windowDuration, Duration slideDuration, int numPartitions, Ordering<T> ord)
 ```
 
-- 含义: 
+- 含义: 基于包含(K, V)键值对的DStream，返回新的包含(K, Long)键值对的DStream。其中的Long value都是滑动窗口内key出现次数的计数。
+  和前面的reduceByKeyAndWindow() 类似，该算子也有一个可选参数numTasks来指定并行任务数
+
+#### 有状态转化操作
+
+UpdateStateByKey用于保存历史记录，有时我们需要在DStream中跨批次维护状态。针对这种情况updateStateByKey()为我们提供了对一个状态变量的访问。用于键值对形式的DStream，给定一个由(键，事件)对构成的DStream，并传递一个指定如何根据新的事件更新每个键对应状态的函数，它可以构建出一个新的DStream其内部数据为(键，状态)对。
+
+#### ``updateStateByKey``
+
+```java
+public <S> DStream<Tuple2<K,S>> updateStateByKey(Function4<Time, K, Seq<V>, Option<S>, scala.Option<S>> updateFunc, Partitioner partitioner, boolean rememberPartitioner, Option<RDD<Tuple2<K,S>>> initialRDD)
+```
+
+- 含义: 返回一个包含新”状态”的DStream。源DStream中每个key及其对应的values会作为func的输入，而func可以用于对每个key的“状态”数据作任意的更新操作
+- 示例：计算出单词从程序开始执行时在所有窗口中的总次数
+
+```java
+// 设置checkpoint位置
+jssc.checkpoint("./checkpoint");
+
+wordCounts.updateStateByKey(new Function2<List<Integer>, Optional<Integer>, Optional<Integer>>() {
+    @Override
+    public Optional<Integer> call(List<Integer> integers, Optional<Integer> state) throws Exception {
+        return Optional.of(integers.stream().reduce(Integer::sum).orElse(0) + state.orElse(0));
+    }
+}).print();
+```
+
+#### ``mapWithState``
+
+```java
+public <StateType, MappedType> MapWithStateDStream<K, V, StateType,MappedType> mapWithState(StateSpec<K, V, StateType, MappedType> spec)
+```
+
+- 含义: Spark 1.6以后的新特性，官方宣称性能是updateStateByKey的十倍，可以认为是updateStateByKey的升级版。这两种算子类似于定义一个全局累加器，每个批次的数据处理结果都会将其更新，这样就能得到整个时间段下该key的状态值
