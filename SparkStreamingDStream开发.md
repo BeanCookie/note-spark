@@ -89,16 +89,29 @@ public <U> DStream<U> transform(Function1<RDD<T>, RDD<U>> transformFunc)
 ```
 
 - 含义: transform算子是DStream所独有的，它用transformFunc函数从输入的RDD得到一个新的RDD，在transformFunc这个函数中还可以使用RDD的Join、Spark SQL等操作，该算子在应对一些复杂操作时比较有用
-- 示例：有一些特殊单词需要在统计时被忽略
+- 示例：只统计指定的单词
 ```java
-JavaPairRDD<String, Boolean> ignoreRdd = jssc.sparkContext().parallelize(Arrays.asList(",", ";")).mapToPair(s -> new Tuple2<>(s, true));
+JavaPairRDD<String, Boolean> ignoreRdd = jssc.sparkContext().parallelize(Arrays.asList("apple", "banana")).mapToPair(s -> new Tuple2<>(s, true));
 
-pairs.transform(new Function<JavaPairRDD<String, Integer>, JavaRDD<Tuple2<String, Integer>>>() {
-    @Override
-    public JavaRDD<Tuple2<String, Integer>> call(JavaPairRDD<String, Integer> rdd) throws Exception {
-        return rdd.join(ignoreRdd).filter(x -> !x._2._2).map(x -> new Tuple2<>(x._1, x._2._1));
-    }
-});
+JavaPairDStream<String, Integer> pairs = words
+    .mapToPair(s -> new Tuple2<>(s, 1))
+    .transformToPair(new Function<JavaPairRDD<String, Integer>, JavaPairRDD<String, Integer>>() {
+        @Override
+        public JavaPairRDD<String, Integer> call(JavaPairRDD<String, Integer> word) throws Exception {
+            return word.join(ignoreRdd)
+                .filter(new Function<Tuple2<String, Tuple2<Integer, Boolean>>, Boolean>() {
+                    @Override
+                    public Boolean call(Tuple2<String, Tuple2<Integer, Boolean>> x) throws Exception {
+                        return x._2._2;
+                    }
+                }).mapToPair(new PairFunction<Tuple2<String, Tuple2<Integer, Boolean>>, String, Integer>() {
+                @Override
+                public Tuple2<String, Integer> call(Tuple2<String, Tuple2<Integer, Boolean>> x) throws Exception {
+                    return new Tuple2<>(x._1, x._2._1);
+                }
+            });
+        }
+    });
 ```
 
 #### ``transformWith``
