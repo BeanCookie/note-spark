@@ -1,3 +1,5 @@
+#### Streaming版的WordCount
+
 ```java
 // 创建StreamingContext
 SparkConf conf = new SparkConf().setMaster("local[2]").setAppName("NetworkWordCount");
