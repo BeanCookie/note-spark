@@ -1,7 +1,7 @@
 #### 架构描述
 Driver是用户编写的数据处理逻辑，这个逻辑中包含用户创建的SparkContext。SparkContext是用户逻辑与Spark集群主要的交互接口，它会和Cluster Manager交互，包括向它申请计算资源等。ClusterManager负责集群的资源管理和调度，现在支持Standalone、Apache Mesos、Hadoop的YARN以及K8S。Worker Node是集群中可以执行计算任务的节点。Executor是在一个Worker Node上为某应用启动的一个进程，该进程负责运行任务，并且负责将数据存在内存或者磁盘上。Task是被送到某个Executor上的计算单元。每个应用都有各自独立的Executor，计算最终在计算节点的Executor中执行。
 
-![spark001](http://git.nuozhilin.site/luzhong/images/raw/branch/master/spark001.jpg)
+![spark001](https://github.com/BeanCookie/note-images/blob/main/spark001.jpg)
 
 #### 相关词汇表
 

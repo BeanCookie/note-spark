@@ -38,8 +38,8 @@ nc -lk 1999
 ```
 
 #### DStream
-![spark003](http://git.nuozhilin.site/luzhong/images/raw/branch/master/spark003.png)
-![spark004](http://git.nuozhilin.site/luzhong/images/raw/branch/master/spark004.png)
+![spark003](https://github.com/BeanCookie/note-images/blob/main/spark003.png)
+![spark004](https://github.com/BeanCookie/note-images/blob/main/spark004.png)
 
 Spark Streaming使用DStream（离散化流）作为数据量的基本抽象，DStream是随时间推移而收到的数据的序列。在内部每个时间区间收到的数据都作为RDD存在，而DStream是由这些RDD所组成的序列。
 
@@ -124,7 +124,7 @@ public <U,V> DStream<V> transformWith(DStream<U> other, Function2<RDD<T>, RDD<U>
 
 - 含义: 与transform算子类似不同的是可以用来处理两个RDD以生成一个RDD
 #### 窗口操作
-![spark002](http://git.nuozhilin.site/luzhong/images/raw/branch/master/spark002.png)
+![spark002](https://github.com/BeanCookie/note-images/blob/main/spark002.png)
 
 可以设置窗口的大小和滑动窗口的间隔来动态的获取当前Steaming不同时间区间的状态数据。
 所有基于窗口的操作都需要两个参数，分别为windowLength（窗口时长）以及slideInterval（滑动步长），两者都必须是 StreamContext的批次间隔的整数倍。窗口时长控制每次计算最近的多少个批次的数据，如果有一个以10秒为批次间隔的源DStream，要创建一个最近30秒的时间窗口(即最近3个批次)，就应当把windowLength设为30秒。而滑动步长的默认值与批次间隔相等，用来控制对新的DStream进行计算的间隔。如果源DStream批次间隔为10秒，并且我们只希望每两个批次计算一次窗口结果就应该把slideInterval设置为20秒。

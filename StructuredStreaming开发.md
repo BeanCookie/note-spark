@@ -200,7 +200,7 @@ query.awaitTermination();
 
 上面的代码表示10分钟的窗口内对字数进行计数每5分钟更新一次，窗口跨度也是结果表的一个字段该字段名为window。
 
-![spark006](http://git.nuozhilin.site/luzhong/images/raw/branch/master/spark008.png)
+![spark006](https://github.com/BeanCookie/note-images/blob/main/spark008.png)
 
 #### Watermarking
 
@@ -222,7 +222,7 @@ Dataset<Row> wordCounts = words
 
 上述代码表示：将“ 10分钟”定义为允许数据晚到的阈值。如果此查询在“更新输出”模式下运行，则引擎将在“结果表”中保持窗口的更新计数，直到该窗口早于水位线为止。
 
-![spark006](http://git.nuozhilin.site/luzhong/images/raw/branch/master/spark009.png)
+![spark006](https://github.com/BeanCookie/note-images/blob/main/spark009.png)
 
 #### Join
 ##### Stream-static Joins

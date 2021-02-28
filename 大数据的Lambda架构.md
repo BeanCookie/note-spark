@@ -17,19 +17,19 @@ Lambda架构将整个系统分为3层：
 
   `query = function(batch view)` 
 
-![lambda002](http://git.nuozhilin.site/luzhong/images/raw/branch/master/lambda002.png)
+![lambda002](https://github.com/BeanCookie/note-images/blob/main/lambda002.png)
 
 #### 速度层（Speed Layer）
 
 批处理层更新间隔期间系统接收到的数据无法实时反映到**Batch View**，**速度层**就是为了解决这一问题而诞生的，它会持续处理批处理层更新期间的实时数据并生成`real time view`，这一过程可以概括为`real time view = function(real time view, new data)`。`real time view`的数据会在**批处理层**生成`batch view`后丢弃，因为最新的`batch view`中已经包含了`real time view`中的全部数据。
 
-![lambda003](http://git.nuozhilin.site/luzhong/images/raw/branch/master/lambda003.jpg)
+![lambda003](https://github.com/BeanCookie/note-images/blob/main/lambda003.jpg)
 
 #### 服务层（Serving Layer）
 
 **服务层**所做的工作就是加载**批处理层**和**速度层**生成的数据并对外提供查询服务，合并`batch view`和`real time view`中的数据最终得到正确的、实时的结果。
 
-![lambda001](http://git.nuozhilin.site/luzhong/images/raw/branch/master/lambda001.jpg)
+![lambda001](https://github.com/BeanCookie/note-images/blob/main/lambda001.jpg)
 
 #### 总结
 
